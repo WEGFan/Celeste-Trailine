@@ -1,4 +1,5 @@
 using System;
+using Celeste.Mod.Trailine.Modules;
 
 namespace Celeste.Mod.Trailine {
     public class TrailineModule : EverestModule {
@@ -20,6 +21,9 @@ namespace Celeste.Mod.Trailine {
                 return;
             }
 
+            CustomTrail.Load();
+            Debug.Load();
+
             Loaded = true;
         }
 
@@ -28,7 +32,15 @@ namespace Celeste.Mod.Trailine {
                 return;
             }
 
+            CustomTrail.Unload();
+            Debug.Unload();
+
             Loaded = false;
+        }
+
+        public override void SaveSettings() {
+            Settings.SettingsVersion = 1;
+            base.SaveSettings();
         }
 
     }
