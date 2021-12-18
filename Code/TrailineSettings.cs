@@ -14,6 +14,12 @@ namespace Celeste.Mod.Trailine {
 #endif
         public bool RenderTrailManagerBuffer { get; set; } = false;
 
+#if !DEBUG
+        [SettingIgnore]
+        [YamlIgnore]
+#endif
+        public bool ShowTextMenuBorders { get; set; } = false;
+
         public TrailTypes TrailType { get; set; } = TrailTypes.HairColor;
 
         public int TrailFrequency { get; set; } = 10;
