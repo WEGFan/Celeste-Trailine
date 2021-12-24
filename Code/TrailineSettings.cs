@@ -44,11 +44,14 @@ namespace Celeste.Mod.Trailine {
         }
 
         public void CreateTrailTypeEntry(TextMenu textMenu, bool inGame) {
-            TrailTypes[] values = (TrailTypes[])typeof(TrailTypes).GetEnumValues();
-            TextMenu.Item item = new TextMenu.Slider("Trail Type", i => typeof(TrailTypes).GetEnumNames()[i],
-                    0, values.Length - 1, (int)TrailType)
+            Dictionary<TrailTypes, string> optionLabels = new Dictionary<TrailTypes, string> {
+                {TrailTypes.HairColor, "Hair Color"},
+                {TrailTypes.Pattern, "Pattern"},
+                {TrailTypes.OnionSkin, "Onion Skin"},
+            };
+            TextMenu.Item item = new TextMenuExt.EnumerableSlider<TrailTypes>("Trail Type", optionLabels, TrailType)
                 .Change(value => {
-                    TrailType = values[value];
+                    TrailType = value;
                     TrailineTrailManager.Clear();
                 });
             textMenu.Add(item);
