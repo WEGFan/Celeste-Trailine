@@ -175,7 +175,10 @@ namespace Celeste.Mod.Trailine {
                                 textMenu.MoveSelection(-1);
                                 if (textMenu.Current is TextMenuExt.SubMenu selectedSubMenu) {
                                     // if it's a color stop item, automatically open it
+                                    string originalConfirmSfx = selectedSubMenu.ConfirmSfx;
+                                    selectedSubMenu.ConfirmSfx = SFX.NONE;
                                     selectedSubMenu.ConfirmPressed();
+                                    selectedSubMenu.ConfirmSfx = originalConfirmSfx;
                                     new DynData<TextMenuExt.SubMenu>(selectedSubMenu).Set("ease", 1f);
                                     // select "Move Up"
                                     selectedSubMenu.Selection = selectedSubMenu.Items.FindIndex(item => item is TextMenu.Button {Label: "Move Up"}) - 1;
@@ -199,7 +202,10 @@ namespace Celeste.Mod.Trailine {
                                 textMenu.MoveSelection(1);
                                 if (textMenu.Current is TextMenuExt.SubMenu selectedSubMenu) {
                                     // if it's a color stop item, automatically open it
+                                    string originalConfirmSfx = selectedSubMenu.ConfirmSfx;
+                                    selectedSubMenu.ConfirmSfx = SFX.NONE;
                                     selectedSubMenu.ConfirmPressed();
+                                    selectedSubMenu.ConfirmSfx = originalConfirmSfx;
                                     new DynData<TextMenuExt.SubMenu>(selectedSubMenu).Set("ease", 1f);
                                     // select "Move Down"
                                     selectedSubMenu.Selection = selectedSubMenu.Items.FindIndex(item => item is TextMenu.Button {Label: "Move Down"}) - 1;
