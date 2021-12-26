@@ -18,7 +18,7 @@ namespace Celeste.Mod.Trailine.Modules {
 
         private static void On_Celeste_RenderCore(On.Celeste.Celeste.orig_RenderCore orig, Celeste self) {
             orig(self);
-            if (!Settings.RenderTrailManagerBuffer || Engine.Scene?.Tracker?.IsEntityTracked<TrailineTrailManager>() != true) {
+            if (!Settings.Debug.RenderTrailManagerBuffer || Engine.Scene?.Tracker?.IsEntityTracked<TrailineTrailManager>() != true) {
                 return;
             }
             HiresRenderer.BeginRender();
@@ -28,7 +28,7 @@ namespace Celeste.Mod.Trailine.Modules {
 
         private static void On_TextMenu_Render(On.Celeste.TextMenu.orig_Render orig, TextMenu self) {
             orig(self);
-            if (!Settings.ShowTextMenuBorders) {
+            if (!Settings.Debug.ShowTextMenuBorders) {
                 return;
             }
             Vector2 position = self.Position - self.Justify * new Vector2(self.Width, self.Height);

@@ -18,16 +18,9 @@ namespace Celeste.Mod.Trailine {
         public int SettingsVersion { get; set; } = 1;
 
 #if !DEBUG
-        [SettingIgnore]
         [YamlIgnore]
 #endif
-        public bool RenderTrailManagerBuffer { get; set; } = false;
-
-#if !DEBUG
-        [SettingIgnore]
-        [YamlIgnore]
-#endif
-        public bool ShowTextMenuBorders { get; set; } = false;
+        public DebugSettings Debug { get; set; } = new DebugSettings();
 
         public TrailTypes TrailType { get; set; } = TrailTypes.HairColor;
 
@@ -84,6 +77,12 @@ namespace Celeste.Mod.Trailine {
                 });
             textMenu.Add(item);
         }
+
+#if !DEBUG
+        public void CreateDebugEntry(TextMenu textMenu, bool inGame) {
+            // everest hasn't support using SettingIgnore on submenus yet, use an empty method to override default behaviour instead 
+        }
+#endif
 
         public void CreateTrailTypeEntry(TextMenu textMenu, bool inGame) {
             Dictionary<TrailTypes, string> optionLabels = new Dictionary<TrailTypes, string> {
@@ -293,6 +292,15 @@ namespace Celeste.Mod.Trailine {
             HairColor,
             Pattern,
             OnionSkin
+
+        }
+
+        [SettingSubMenu]
+        public class DebugSettings {
+
+            public bool RenderTrailManagerBuffer { get; set; } = false;
+
+            public bool ShowTextMenuBorders { get; set; } = false;
 
         }
 
