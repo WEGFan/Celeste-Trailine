@@ -39,7 +39,6 @@ namespace Celeste.Mod.Trailine {
 
         public bool HideOriginalDashTrails { get; set; } = true;
 
-        [SettingIgnore]
         public int CurrentPatternIndex { get; set; } = 0;
 
         [YamlIgnore]
@@ -69,6 +68,9 @@ namespace Celeste.Mod.Trailine {
                 Duration = 2f
             }
         };
+
+        private List<TextMenu.Item> currentPatternItems = new List<TextMenu.Item>();
+        private PatternPreview currentPatternPreview;
 
         public void CreateEnabledEntry(TextMenu textMenu, bool inGame) {
             TextMenu.Item item = new TextMenu.OnOff("Enabled", Enabled)
@@ -124,18 +126,57 @@ namespace Celeste.Mod.Trailine {
             textMenu.Add(item);
         }
 
-        private void RecreateColorStopEntries(List<TextMenu.Item> existingColorStopItems, TextMenu textMenu, bool inGame) {
-            int firstIndex = textMenu.Items.IndexOf(existingColorStopItems[0]);
-            existingColorStopItems.ForEach(item => textMenu.Remove(item));
-            List<TextMenu.Item> colorStopItems = CreateColorStopEntries(textMenu, inGame);
-            foreach (TextMenu.Item item in Enumerable.Reverse(colorStopItems)) {
+        public void CreateCurrentPatternIndexEntry(TextMenu textMenu, bool inGame) {
+            TextMenu.Slider currentPatternSlider;
+            TextMenu.Button removePatternButton = null;
+            textMenu
+                .Add((currentPatternSlider = new TextMenu.Slider("Current Pattern", i => $"Pattern {i + 1}",
+                        0, Patterns.Count - 1, CurrentPatternIndex))
+                    .Change(value => {
+                        CurrentPatternIndex = value;
+                        currentPatternPreview.Pattern = CurrentPattern;
+                        RecreatePatternEntries(textMenu, inGame);
+                    }))
+                .Add(new TextMenu.Button("Add Pattern")
+                    .Pressed(() => {
+                        Patterns.Add(new TrailPattern());
+                        CurrentPatternIndex = Patterns.Count - 1;
+                        currentPatternSlider.Add($"Pattern {CurrentPatternIndex + 1}", CurrentPatternIndex, false);
+                        currentPatternSlider.OnValueChange(CurrentPatternIndex);
+                        // ReSharper disable once AccessToModifiedClosure
+                        removePatternButton!.Disabled = false;
+                    }))
+                .Add((removePatternButton = new TextMenu.Button("Remove Pattern"))
+                    .Pressed(() => {
+                        currentPatternSlider.Values.RemoveAt(Patterns.Count - 1);
+                        Patterns.RemoveAt(CurrentPatternIndex);
+                        CurrentPatternIndex = Calc.Clamp(CurrentPatternIndex, 0, Patterns.Count - 1);
+                        currentPatternSlider.Index = CurrentPatternIndex;
+                        currentPatternSlider.OnValueChange(currentPatternSlider.Values[currentPatternSlider.Index].Item2);
+                        if (Patterns.Count == 1) {
+                            removePatternButton.Disabled = true;
+                            textMenu.MoveSelection(-1);
+                        }
+                    }));
+        }
+
+        private void RecreatePatternEntries(TextMenu textMenu, bool inGame) {
+            int firstIndex = textMenu.Items.IndexOf(currentPatternItems[0]);
+            currentPatternItems.ForEach(item => textMenu.Remove(item));
+            CreatePatternEntries(textMenu, inGame);
+            foreach (TextMenu.Item item in Enumerable.Reverse(currentPatternItems)) {
                 textMenu.Insert(firstIndex, item);
             }
         }
 
-        public List<TextMenu.Item> CreateColorStopEntries(TextMenu textMenu, bool inGame) {
+        public void CreatePatternEntries(TextMenu textMenu, bool inGame) {
+            currentPatternItems.Clear();
             // TODO: refactor this huge mess code
-            List<TextMenu.Item> colorStopItems = new List<TextMenu.Item>();
+            currentPatternItems.Add(currentPatternPreview = new PatternPreview(CurrentPattern));
+            currentPatternItems.Add(new TextMenu.Slider("Duration", i => $"{i}s", 1, 20, (int)CurrentPattern.Duration)
+                .Change(value => {
+                    CurrentPattern.Duration = value;
+                }));
             for (int i = 0; i < CurrentPattern.ColorStops.Count; i++) {
                 ColorStop colorStop = CurrentPattern.ColorStops[i];
                 TextMenuExt.SubMenu subMenu = new TextMenuExt.SubMenu($"Color {i + 1}: {ColorUtils.ColorToHex(colorStop.Color)}", false);
@@ -171,7 +212,7 @@ namespace Celeste.Mod.Trailine {
                             CurrentPattern.ColorStops[index] = temp;
                             subMenu.Exit();
                             textMenu.Scene.OnEndOfFrame += () => {
-                                RecreateColorStopEntries(colorStopItems, textMenu, inGame);
+                                RecreatePatternEntries(textMenu, inGame);
                                 textMenu.MoveSelection(-1);
                                 if (textMenu.Current is TextMenuExt.SubMenu selectedSubMenu) {
                                     // if it's a color stop item, automatically open it
@@ -198,7 +239,7 @@ namespace Celeste.Mod.Trailine {
                             CurrentPattern.ColorStops[index] = temp;
                             subMenu.Exit();
                             textMenu.Scene.OnEndOfFrame += () => {
-                                RecreateColorStopEntries(colorStopItems, textMenu, inGame);
+                                RecreatePatternEntries(textMenu, inGame);
                                 textMenu.MoveSelection(1);
                                 if (textMenu.Current is TextMenuExt.SubMenu selectedSubMenu) {
                                     // if it's a color stop item, automatically open it
@@ -222,13 +263,13 @@ namespace Celeste.Mod.Trailine {
                         CurrentPattern.ColorStops.RemoveAt(index);
                         subMenu.Exit();
                         textMenu.Scene.OnEndOfFrame += () => {
-                            RecreateColorStopEntries(colorStopItems, textMenu, inGame);
+                            RecreatePatternEntries(textMenu, inGame);
                         };
                     }));
 
-                colorStopItems.Add(subMenu);
+                currentPatternItems.Add(subMenu);
             }
-            colorStopItems.Add(new TextMenu.Button("Add Color")
+            currentPatternItems.Add(new TextMenu.Button("Add Color")
                 .Apply(button => {
                     button.Pressed(() => {
                         CurrentPattern.ColorStops.Add(new ColorStop {
@@ -236,23 +277,15 @@ namespace Celeste.Mod.Trailine {
                             Width = 1f
                         });
                         textMenu.Scene.OnEndOfFrame += () => {
-                            RecreateColorStopEntries(colorStopItems, textMenu, inGame);
+                            RecreatePatternEntries(textMenu, inGame);
                         };
                     });
                 }));
-            return colorStopItems;
         }
 
         public void CreatePatternsEntry(TextMenu textMenu, bool inGame) {
-            textMenu
-                .Add(new PatternPreview(CurrentPattern))
-                .Add(new TextMenu.Slider("Duration", i => $"{i}s", 1, 20, (int)CurrentPattern.Duration)
-                    .Change(value => {
-                        CurrentPattern.Duration = value;
-                    }));
-
-            List<TextMenu.Item> colorStopItems = CreateColorStopEntries(textMenu, inGame);
-            colorStopItems.ForEach(item => textMenu.Add(item));
+            CreatePatternEntries(textMenu, inGame);
+            currentPatternItems.ForEach(item => textMenu.Add(item));
         }
 
         public enum TrailTypes {
