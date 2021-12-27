@@ -1,5 +1,6 @@
 using System;
 using Celeste.Mod.Trailine.Modules;
+using Celeste.Mod.Trailine.UI;
 
 namespace Celeste.Mod.Trailine {
     public class TrailineModule : EverestModule {
@@ -23,6 +24,7 @@ namespace Celeste.Mod.Trailine {
 
             CustomTrail.Load();
             Debug.Load();
+            PatternPreview.Load();
 
             Loaded = true;
         }
@@ -34,6 +36,7 @@ namespace Celeste.Mod.Trailine {
 
             CustomTrail.Unload();
             Debug.Unload();
+            PatternPreview.Unload();
 
             Loaded = false;
         }

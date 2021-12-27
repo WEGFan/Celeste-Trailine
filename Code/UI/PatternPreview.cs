@@ -8,6 +8,7 @@ namespace Celeste.Mod.Trailine.UI {
         public TrailPattern Pattern { get; set; }
 
         private VirtualRenderTarget buffer;
+        private BeforeRenderHook beforeRenderHook;
 
         private const int GradientBarWidth = 1000;
         private const int GradientBarHeight = 20;
@@ -17,7 +18,11 @@ namespace Celeste.Mod.Trailine.UI {
         }
 
         public override void Added() {
-            Container.Add(new BeforeRenderHook(BeforeRender));
+            Container.Add(beforeRenderHook = new BeforeRenderHook(BeforeRender));
+        }
+
+        public void Removed() {
+            Container.Remove(beforeRenderHook);
         }
 
         public override float LeftWidth() {
@@ -43,6 +48,21 @@ namespace Celeste.Mod.Trailine.UI {
 
             Draw.SpriteBatch.Draw(buffer.Target, new Vector2(menuCenter, position.Y), null, Color.White, 0f,
                 new Vector2(GradientBarWidth / 2f, 0.5f), new Vector2(1f, GradientBarHeight), SpriteEffects.None, 0f);
+        }
+
+        public static void Load() {
+            On.Celeste.TextMenu.Remove += On_TextMenu_Remove;
+        }
+
+        public static void Unload() {
+            On.Celeste.TextMenu.Remove -= On_TextMenu_Remove;
+        }
+
+        private static TextMenu On_TextMenu_Remove(On.Celeste.TextMenu.orig_Remove orig, TextMenu self, TextMenu.Item item) {
+            if (item is PatternPreview patternPreview) {
+                patternPreview.Removed();
+            }
+            return orig(self, item);
         }
 
     }
