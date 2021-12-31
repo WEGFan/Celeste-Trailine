@@ -99,7 +99,7 @@ namespace Celeste.Mod.Trailine {
         }
 
         public void CreateTrailFrequencyEntry(TextMenu textMenu, bool inGame) {
-            TextMenu.Item item = new TextMenu.Slider("Trail Frequency", i => $"{i / 100.0:F2}s",
+            TextMenu.Item item = new FastMoveSlider("Trail Frequency", i => $"{i / 100f:F2}s",
                     1, 100, TrailFrequency)
                 .Change(value => {
                     TrailFrequency = value;
@@ -108,7 +108,7 @@ namespace Celeste.Mod.Trailine {
         }
 
         public void CreateTrailDurationEntry(TextMenu textMenu, bool inGame) {
-            TextMenu.Item item = new TextMenu.Slider("Trail Duration", i => $"{i / 100.0:F2}s",
+            TextMenu.Item item = new FastMoveSlider("Trail Duration", i => $"{i / 100f:F2}s",
                     0, 6000, TrailDuration)
                 .Change(value => {
                     TrailDuration = value;
@@ -173,7 +173,7 @@ namespace Celeste.Mod.Trailine {
             currentPatternItems.Clear();
             // TODO: refactor this huge mess code
             currentPatternItems.Add(currentPatternPreview = new PatternPreview(CurrentPattern));
-            currentPatternItems.Add(new TextMenu.Slider("Duration", i => $"{i}s", 1, 20, (int)CurrentPattern.Duration)
+            currentPatternItems.Add(new FastMoveSlider("Duration", i => $"{i / 100f:F2}s", 1, 20, (int)CurrentPattern.Duration)
                 .Change(value => {
                     CurrentPattern.Duration = value;
                 }));
