@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Celeste.Mod.Trailine.Modules;
@@ -24,11 +25,30 @@ namespace Celeste.Mod.Trailine {
 
         public TrailTypes TrailType { get; set; } = TrailTypes.HairColor;
 
-        public int TrailFrequency { get; set; } = 10;
+        [YamlIgnore]
+        public int TrailFrequencySliderValue { get; set; } = (int)(0.1 * 100);
 
-        public int TrailDuration { get; set; } = 200;
+        public float TrailFrequency {
+            get => TrailFrequencySliderValue / 100f;
+            set => TrailFrequencySliderValue = Calc.Clamp((int)Math.Round(value * 100), 1, 60 * 100);
+        }
 
-        public int TrailOpacity { get; set; } = 16;
+        [YamlIgnore]
+        public int TrailDurationSliderValue { get; set; } = 5 * 20;
+
+        public float TrailDuration {
+            get => TrailDurationSliderValue / 20f;
+            set => TrailDurationSliderValue = Calc.Clamp((int)Math.Round(value * 20), 1, 60 * 20);
+        }
+
+     
+        [YamlIgnore]
+        public int TrailOpacitySliderValue { get; set; } = (int)(0.8 * 20);
+
+        public float TrailOpacity {
+            get => TrailOpacitySliderValue / 20f;
+            set => TrailOpacitySliderValue = Calc.Clamp((int)Math.Round(value * 20), 0, 1 * 20);
+        }
 
         public bool HideOriginalDashTrails { get; set; } = true;
 
@@ -100,27 +120,27 @@ namespace Celeste.Mod.Trailine {
 
         public void CreateTrailFrequencyEntry(TextMenu textMenu, bool inGame) {
             TextMenu.Item item = new FastMoveSlider("Trail Frequency", i => $"{i / 100f:F2}s",
-                    1, 100, TrailFrequency)
+                    1, 1 * 100, TrailFrequencySliderValue)
                 .Change(value => {
-                    TrailFrequency = value;
+                    TrailFrequencySliderValue = value;
                 });
             textMenu.Add(item);
         }
 
         public void CreateTrailDurationEntry(TextMenu textMenu, bool inGame) {
-            TextMenu.Item item = new FastMoveSlider("Trail Duration", i => $"{i / 100f:F2}s",
-                    0, 6000, TrailDuration)
+            TextMenu.Item item = new FastMoveSlider("Trail Duration", i => $"{i / 20f:F2}s",
+                    0, 60 * 20, TrailDurationSliderValue)
                 .Change(value => {
-                    TrailDuration = value;
+                    TrailDurationSliderValue = value;
                 });
             textMenu.Add(item);
         }
 
         public void CreateTrailOpacityEntry(TextMenu textMenu, bool inGame) {
-            TextMenu.Item item = new TextMenu.Slider("Trail Opacity", i => $"{i * 5}%",
-                    0, 20, TrailOpacity)
+            TextMenu.Item item = new TextMenu.Slider("Trail Opacity", i => $"{100 * i / 20f}%",
+                    0, 1 * 20, TrailOpacitySliderValue)
                 .Change(value => {
-                    TrailOpacity = value;
+                    TrailOpacitySliderValue = value;
                 });
             textMenu.Add(item);
         }
@@ -175,9 +195,9 @@ namespace Celeste.Mod.Trailine {
             currentPatternItems.Clear();
             // TODO: refactor this huge mess code
             currentPatternItems.Add(currentPatternPreview = new PatternPreview(CurrentPattern));
-            currentPatternItems.Add(new FastMoveSlider("Duration", i => $"{i / 100f:F2}s", 1, 20, (int)CurrentPattern.Duration)
+            currentPatternItems.Add(new FastMoveSlider("Duration", i => $"{i / 20f:F2}s", 1, 60 * 20, CurrentPattern.DurationSliderValue)
                 .Change(value => {
-                    CurrentPattern.Duration = value;
+                    CurrentPattern.DurationSliderValue = value;
                 }));
             for (int i = 0; i < CurrentPattern.ColorStops.Count; i++) {
                 ColorStop colorStop = CurrentPattern.ColorStops[i];
@@ -313,7 +333,13 @@ namespace Celeste.Mod.Trailine {
 
         public List<ColorStop> ColorStops { get; set; } = new List<ColorStop> {new ColorStop()};
 
-        public float Duration { get; set; } = 5f;
+        public float Duration {
+            get => DurationSliderValue / 20f;
+            set => DurationSliderValue = Calc.Clamp((int)Math.Round(value * 20), 1, 60 * 20);
+        }
+
+        [YamlIgnore]
+        public int DurationSliderValue { get; set; } = 5 * 20;
 
         public Color ColorAtTime(float time) {
             if (ColorStops.Count == 1 || Duration == 0f) {
