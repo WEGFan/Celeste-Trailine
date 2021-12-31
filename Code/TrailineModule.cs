@@ -23,8 +23,9 @@ namespace Celeste.Mod.Trailine {
             }
 
             CustomTrail.Load();
-            Debug.Load();
             PatternPreview.Load();
+            SubMenuFix.Load();
+            Debug.Load();
 
             Loaded = true;
         }
@@ -35,8 +36,9 @@ namespace Celeste.Mod.Trailine {
             }
 
             CustomTrail.Unload();
-            Debug.Unload();
             PatternPreview.Unload();
+            SubMenuFix.Unload();
+            Debug.Unload();
 
             Loaded = false;
         }
