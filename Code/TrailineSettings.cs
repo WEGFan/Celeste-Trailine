@@ -141,6 +141,7 @@ namespace Celeste.Mod.Trailine {
                         Patterns.Add(new TrailPattern());
                         CurrentPatternIndex = Patterns.Count - 1;
                         currentPatternSlider.Add($"Pattern {CurrentPatternIndex + 1}", CurrentPatternIndex, false);
+                        currentPatternSlider.Index = CurrentPatternIndex;
                         currentPatternSlider.OnValueChange(CurrentPatternIndex);
                         // ReSharper disable once AccessToModifiedClosure
                         removePatternButton!.Disabled = false;
