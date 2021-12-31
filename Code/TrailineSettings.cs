@@ -146,7 +146,9 @@ namespace Celeste.Mod.Trailine {
                         // ReSharper disable once AccessToModifiedClosure
                         removePatternButton!.Disabled = false;
                     }))
-                .Add((removePatternButton = new TextMenu.Button("Remove Pattern"))
+                .Add((removePatternButton = new TextMenu.Button("Remove Pattern") {
+                        Disabled = Patterns.Count == 1
+                    })
                     .Pressed(() => {
                         currentPatternSlider.Values.RemoveAt(Patterns.Count - 1);
                         Patterns.RemoveAt(CurrentPatternIndex);
