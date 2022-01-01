@@ -129,7 +129,7 @@ namespace Celeste.Mod.Trailine {
 
         public void CreateTrailDurationEntry(TextMenu textMenu, bool inGame) {
             TextMenu.Item item = new FastMoveSlider("Trail Duration", i => $"{i / 20f:F2}s",
-                    0, 60 * 20, TrailDurationSliderValue)
+                    0, 30 * 20, TrailDurationSliderValue)
                 .Change(value => {
                     TrailDurationSliderValue = value;
                 });
