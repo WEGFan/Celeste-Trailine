@@ -1,6 +1,10 @@
 using System;
+using System.IO;
+using Celeste.Mod.Core;
 using Celeste.Mod.Trailine.Modules;
 using Celeste.Mod.Trailine.UI;
+using Celeste.Mod.Trailine.Utils;
+using YamlDotNet.Serialization;
 
 namespace Celeste.Mod.Trailine {
     public class TrailineModule : EverestModule {
@@ -44,8 +48,45 @@ namespace Celeste.Mod.Trailine {
         }
 
         public override void SaveSettings() {
+            DDW_EverestModule wrapper = new DDW_EverestModule(this);
+
+            bool forceFlush = wrapper.ForceSaveDataFlush > 0;
+            if (forceFlush) {
+                wrapper.ForceSaveDataFlush--;
+            }
+
+            if (SettingsType == null || _Settings == null) {
+                return;
+            }
+
             Settings.SettingsVersion = 1;
-            base.SaveSettings();
+
+            string path = UserIO.GetSaveFilePath("modsettings-" + Metadata.Name);
+            if (File.Exists(path)) {
+                File.Delete(path);
+            }
+
+            Directory.CreateDirectory(Path.GetDirectoryName(path));
+
+            try {
+                using (FileStream stream = File.OpenWrite(path)) {
+                    using (StreamWriter writer = new StreamWriter(stream)) {
+                        // disable anchors in serialized yaml
+                        // https://github.com/EverestAPI/Everest/pull/404
+                        ISerializer serializer = new SerializerBuilder()
+                            .ConfigureDefaultValuesHandling(DefaultValuesHandling.Preserve)
+                            .DisableAliases()
+                            .Build();
+                        serializer.Serialize(writer, _Settings, SettingsType);
+                        if (forceFlush || ((CoreModule.Settings.SaveDataFlush ?? true) && !MainThreadHelper.IsMainThread)) {
+                            stream.Flush(true);
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                Logger.Log(LogLevel.Warn, "EverestModule", $"Failed to save the settings of {Metadata.Name}!");
+                Logger.LogDetailed(e);
+            }
         }
 
     }
