@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Monocle;
@@ -70,13 +71,41 @@ namespace Celeste.Mod.Trailine.Modules {
                 Snapshot snapshot = snapshots[j];
                 Vector2 vector = new Vector2((j % columns + 0.5f) * 64f, (j / columns + 0.5f) * 64f) - snapshot.Position;
                 if (snapshot.Hair != null) {
-                    // FIX: limit hair length
-                    for (int k = 0; k < snapshot.Hair.Nodes.Count; k++) {
-                        snapshot.Hair.Nodes[k] += vector;
+                    PlayerHair hair = snapshot.Hair;
+                    List<Vector2> nodes = hair.Nodes;
+                    Vector2[] originalPositions = new Vector2[nodes.Count];
+                    // count how many hair nodes should be used to draw trail
+                    int drawNodesCount = 1;
+                    int originalHairCount = hair.Sprite.HairCount;
+                    for (int i = 1; i < originalHairCount; i++) {
+                        // calculate node's position and size
+                        MTexture hairTexture = hair.GetHairTexture(i);
+                        Vector2 hairScale = hair.PublicGetHairScale(i).Abs();
+                        Vector2 pos = new Vector2(-5f, -5f) * hairScale - snapshot.Position + nodes[i] + new Vector2(64f, 64f) * 0.5f;
+                        Vector2 size = new Vector2(hairTexture.Width, hairTexture.Height) * hairScale;
+                        Hitbox rect = new Hitbox(size.X, size.Y, pos.X, pos.Y);
+
+                        // if node is not fully inside trail's render box, don't render remaining nodes
+                        // otherwise it will be drawn to other trails' box
+                        if (!(rect.TopLeft is {X: >= 2f, Y: >= 2f} && rect.BottomRight is {X: <= 60f, Y: <= 60f})) {
+                            break;
+                        }
+                        drawNodesCount++;
                     }
-                    snapshot.Hair.Render();
-                    for (int l = 0; l < snapshot.Hair.Nodes.Count; l++) {
-                        snapshot.Hair.Nodes[l] -= vector;
+
+                    for (int i = 0; i < drawNodesCount; i++) {
+                        originalPositions[i] = nodes[i];
+                        nodes[i] += vector;
+                    }
+
+                    // modify hair count so the trail has a better hair
+                    int original = hair.Sprite.HairCount;
+                    hair.Sprite.HairCount = drawNodesCount;
+                    hair.Render();
+                    hair.Sprite.HairCount = original;
+
+                    for (int i = 0; i < drawNodesCount; i++) {
+                        nodes[i] = originalPositions[i];
                     }
                 }
                 Vector2 scale = snapshot.Sprite.Scale;
