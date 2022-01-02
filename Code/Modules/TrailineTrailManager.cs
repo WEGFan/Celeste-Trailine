@@ -94,7 +94,6 @@ namespace Celeste.Mod.Trailine.Modules {
                     }
 
                     for (int i = 0; i < drawNodesCount; i++) {
-                        originalPositions[i] = nodes[i];
                         nodes[i] += vector;
                     }
                     if (hair.DrawPlayerSpriteOutline) {
@@ -104,11 +103,12 @@ namespace Celeste.Mod.Trailine.Modules {
                     // modify hair count so the trail has a better hair
                     int original = hair.Sprite.HairCount;
                     hair.Sprite.HairCount = drawNodesCount;
-                    hair.Render();
-                    hair.Sprite.HairCount = original;
 
+                    hair.Render();
+
+                    hair.Sprite.HairCount = original;
                     for (int i = 0; i < drawNodesCount; i++) {
-                        nodes[i] = originalPositions[i];
+                        nodes[i] -= vector;
                     }
                     if (hair.DrawPlayerSpriteOutline) {
                         hair.Sprite.Position -= vector;
