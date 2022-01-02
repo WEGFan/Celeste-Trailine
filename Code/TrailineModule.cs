@@ -4,6 +4,7 @@ using Celeste.Mod.Core;
 using Celeste.Mod.Trailine.Modules;
 using Celeste.Mod.Trailine.UI;
 using Celeste.Mod.Trailine.Utils;
+using Microsoft.Xna.Framework;
 using YamlDotNet.Serialization;
 
 namespace Celeste.Mod.Trailine {
@@ -76,6 +77,7 @@ namespace Celeste.Mod.Trailine {
                         ISerializer serializer = new SerializerBuilder()
                             .ConfigureDefaultValuesHandling(DefaultValuesHandling.Preserve)
                             .DisableAliases()
+                            .WithAttributeOverride<Color>(c => c.PackedValue, new YamlIgnoreAttribute())
                             .Build();
                         serializer.Serialize(writer, _Settings, SettingsType);
                         if (forceFlush || ((CoreModule.Settings.SaveDataFlush ?? true) && !MainThreadHelper.IsMainThread)) {
