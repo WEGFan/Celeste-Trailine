@@ -269,7 +269,7 @@ namespace Celeste.Mod.Trailine.Modules {
             public override void Render() {
                 VirtualRenderTarget buffer = Manager.buffer;
                 Rectangle value = new Rectangle(Index % columns * 64, Index / columns * 64, 64, 64);
-                float num = Duration > 0f ? 0.75f * (1f - Ease.CubeOut(Percent)) : 1f;
+                float num = Duration > 0f ? 1f - Ease.CubeOut(Percent) : 1f;
                 num *= TrailineModule.Settings.TrailOpacity;
                 if (buffer != null) {
                     Draw.SpriteBatch.Draw((RenderTarget2D)buffer, Position, value, Color * num, 0f, new Vector2(64f, 64f) * 0.5f, Vector2.One, SpriteEffects.None, 0f);
