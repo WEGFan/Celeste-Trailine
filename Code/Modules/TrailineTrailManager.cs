@@ -7,21 +7,16 @@ namespace Celeste.Mod.Trailine.Modules {
     [Tracked]
     public class TrailineTrailManager : Entity {
 
-        private static BlendState MaxBlendState = new BlendState {
+        private const int Rows = 64;
+        private const int Columns = 64;
+
+        private static readonly BlendState maxBlendState = new BlendState {
             ColorSourceBlend = Blend.DestinationAlpha,
             AlphaSourceBlend = Blend.DestinationAlpha
         };
 
-        private const int size = columns * rows;
-
-        private const int columns = 64; // 64
-
-        private const int rows = 64;
-
-        private Snapshot[] snapshots = new Snapshot[size];
-
+        private readonly Snapshot[] snapshots = new Snapshot[Rows * Columns];
         private VirtualRenderTarget buffer;
-
         private bool dirty;
 
         public TrailineTrailManager() {
@@ -42,9 +37,7 @@ namespace Celeste.Mod.Trailine.Modules {
         }
 
         private void Dispose() {
-            if (buffer != null) {
-                buffer.Dispose();
-            }
+            buffer?.Dispose();
             buffer = null;
         }
 
@@ -52,49 +45,50 @@ namespace Celeste.Mod.Trailine.Modules {
             if (!dirty) {
                 return;
             }
-            if (buffer == null) {
-                buffer = VirtualContent.CreateRenderTarget("trailine-trail-manager", columns * 64, rows * 64);
-            }
+
+            buffer ??= VirtualContent.CreateRenderTarget("trailine-trail-manager", Columns * Snapshot.SnapshotWidth, Rows * Snapshot.SnapshotHeight);
+
             Engine.Graphics.GraphicsDevice.SetRenderTarget(buffer);
             Draw.SpriteBatch.Begin(SpriteSortMode.Deferred, LightingRenderer.OccludeBlendState);
             for (int i = 0; i < snapshots.Length; i++) {
                 if (snapshots[i] != null && !snapshots[i].Drawn) {
-                    Draw.Rect(i % columns * 64, i / columns * 64, 64f, 64f, Color.Transparent);
+                    Draw.Rect(i % Columns * Snapshot.SnapshotWidth, i / Columns * Snapshot.SnapshotHeight, Snapshot.SnapshotWidth, Snapshot.SnapshotHeight, Color.Transparent);
                 }
             }
             Draw.SpriteBatch.End();
+
             Draw.SpriteBatch.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend, SamplerState.PointClamp, null, RasterizerState.CullNone);
-            for (int j = 0; j < snapshots.Length; j++) {
-                if (snapshots[j] == null || snapshots[j].Drawn) {
+            for (int i = 0; i < snapshots.Length; i++) {
+                if (snapshots[i] == null || snapshots[i].Drawn) {
                     continue;
                 }
-                Snapshot snapshot = snapshots[j];
-                Vector2 vector = new Vector2((j % columns + 0.5f) * 64f, (j / columns + 0.5f) * 64f) - snapshot.Position;
+                Snapshot snapshot = snapshots[i];
+                Vector2 vector = new Vector2((i % Columns + 0.5f) * Snapshot.SnapshotWidth, (i / Columns + 0.5f) * Snapshot.SnapshotHeight) - snapshot.Position;
                 if (snapshot.Hair != null) {
                     PlayerHair hair = snapshot.Hair;
                     List<Vector2> nodes = hair.Nodes;
-                    Vector2[] originalPositions = new Vector2[nodes.Count];
+
                     // count how many hair nodes should be used to draw trail
                     int drawNodesCount = 1;
                     int originalHairCount = hair.Sprite.HairCount;
-                    for (int i = 1; i < originalHairCount; i++) {
+                    for (int j = 1; j < originalHairCount; j++) {
                         // calculate node's position and size
-                        MTexture hairTexture = hair.GetHairTexture(i);
-                        Vector2 hairScale = hair.PublicGetHairScale(i).Abs();
-                        Vector2 pos = new Vector2(-5f, -5f) * hairScale - snapshot.Position + nodes[i] + new Vector2(64f, 64f) * 0.5f;
+                        MTexture hairTexture = hair.GetHairTexture(j);
+                        Vector2 hairScale = hair.PublicGetHairScale(j).Abs();
+                        Vector2 pos = new Vector2(-5f, -5f) * hairScale - snapshot.Position + nodes[j] + new Vector2(Snapshot.SnapshotWidth, Snapshot.SnapshotHeight) * 0.5f;
                         Vector2 size = new Vector2(hairTexture.Width, hairTexture.Height) * hairScale;
                         Hitbox rect = new Hitbox(size.X, size.Y, pos.X, pos.Y);
 
                         // if node is not fully inside trail's render box, don't render remaining nodes
                         // otherwise it will be drawn to other trails' box
-                        if (!(rect.TopLeft is {X: >= 2f, Y: >= 2f} && rect.BottomRight is {X: <= 60f, Y: <= 60f})) {
+                        if (!(rect.TopLeft is {X: >= 2f, Y: >= 2f} && rect.BottomRight is {X: <= Snapshot.SnapshotWidth - 2 * 2f, Y: <= Snapshot.SnapshotHeight - 2 * 2f})) {
                             break;
                         }
                         drawNodesCount++;
                     }
 
-                    for (int i = 0; i < drawNodesCount; i++) {
-                        nodes[i] += vector;
+                    for (int j = 0; j < drawNodesCount; j++) {
+                        nodes[j] += vector;
                     }
                     if (hair.DrawPlayerSpriteOutline) {
                         hair.Sprite.Position += vector;
@@ -107,8 +101,8 @@ namespace Celeste.Mod.Trailine.Modules {
                     hair.Render();
 
                     hair.Sprite.HairCount = original;
-                    for (int i = 0; i < drawNodesCount; i++) {
-                        nodes[i] -= vector;
+                    for (int j = 0; j < drawNodesCount; j++) {
+                        nodes[j] -= vector;
                     }
                     if (hair.DrawPlayerSpriteOutline) {
                         hair.Sprite.Position -= vector;
@@ -123,28 +117,24 @@ namespace Celeste.Mod.Trailine.Modules {
                 snapshot.Drawn = true;
             }
             Draw.SpriteBatch.End();
+
             if (TrailineModule.Settings.TrailType != TrailineSettings.TrailTypes.OnionSkin) {
-                Draw.SpriteBatch.Begin(SpriteSortMode.Deferred, MaxBlendState);
+                Draw.SpriteBatch.Begin(SpriteSortMode.Deferred, maxBlendState);
                 Draw.Rect(0f, 0f, buffer.Width, buffer.Height, new Color(1f, 1f, 1f, 1f));
                 Draw.SpriteBatch.End();
             }
+
             dirty = false;
         }
 
         public static void Add(Entity entity, Color color, float duration = 1f, bool frozenUpdate = false, bool useRawDeltaTime = false) {
-            Image image = entity.Get<PlayerSprite>();
-            if (image == null) {
-                image = entity.Get<Sprite>();
-            }
+            Image image = entity.Get<PlayerSprite>() ?? entity.Get<Sprite>();
             PlayerHair hair = entity.Get<PlayerHair>();
             Add(entity.Position, image, hair, image.Scale, color, entity.Depth + 1, duration, frozenUpdate, useRawDeltaTime);
         }
 
         public static void Add(Entity entity, Vector2 scale, Color color, float duration = 1f) {
-            Image image = entity.Get<PlayerSprite>();
-            if (image == null) {
-                image = entity.Get<Sprite>();
-            }
+            Image image = entity.Get<PlayerSprite>() ?? entity.Get<Sprite>();
             PlayerHair hair = entity.Get<PlayerHair>();
             Add(entity.Position, image, hair, scale, color, entity.Depth + 1, duration);
         }
@@ -177,16 +167,14 @@ namespace Celeste.Mod.Trailine.Modules {
             if (entity == null) {
                 return;
             }
-            for (int i = 0; i < entity.snapshots.Length; i++) {
-                if (entity.snapshots[i] != null) {
-                    entity.snapshots[i].RemoveSelf();
-                }
+            foreach (Snapshot snapshot in entity.snapshots) {
+                snapshot?.RemoveSelf();
             }
         }
 
-        public static void Add(Entity entity, Color color, float duration = 1f) {
-            Add(entity, color, duration, false);
-        }
+        // public static void Add(Entity entity, Color color, float duration = 1f) {
+        //     Add(entity, color, duration, false);
+        // }
 
         public static void DebugRender() {
             TrailineTrailManager entity = Engine.Scene.Tracker.GetEntity<TrailineTrailManager>();
@@ -197,10 +185,10 @@ namespace Celeste.Mod.Trailine.Modules {
             float scale = 0.5f;
             if (entity.buffer != null) {
                 Draw.SpriteBatch.Draw(entity.buffer, new Vector2(0, 0), entity.buffer.Bounds, Color.White, 0f, Vector2.Zero, Vector2.One * scale, SpriteEffects.None, 0f);
-                for (int x = 0; x <= entity.buffer.Width; x += 64) {
+                for (int x = 0; x <= entity.buffer.Width; x += Snapshot.SnapshotWidth) {
                     Draw.Line(new Vector2(x, 0) * scale, new Vector2(x, entity.buffer.Height) * scale, Color.Green);
                 }
-                for (int y = 0; y <= entity.buffer.Height; y += 64) {
+                for (int y = 0; y <= entity.buffer.Height; y += Snapshot.SnapshotHeight) {
                     Draw.Line(new Vector2(0, y) * scale, new Vector2(entity.buffer.Width, y) * scale, Color.Green);
                 }
             }
@@ -210,24 +198,18 @@ namespace Celeste.Mod.Trailine.Modules {
         [Tracked]
         public class Snapshot : Entity {
 
+            public const int SnapshotWidth = 64;
+            public const int SnapshotHeight = 64;
+
             public TrailineTrailManager Manager;
-
             public Image Sprite;
-
             public Vector2 SpriteScale;
-
             public PlayerHair Hair;
-
             public int Index;
-
             public Color Color;
-
             public float Percent;
-
             public float Duration;
-
             public bool Drawn;
-
             public bool UseRawDeltaTime;
 
             public Snapshot() {
@@ -268,11 +250,11 @@ namespace Celeste.Mod.Trailine.Modules {
 
             public override void Render() {
                 VirtualRenderTarget buffer = Manager.buffer;
-                Rectangle value = new Rectangle(Index % columns * 64, Index / columns * 64, 64, 64);
-                float num = Duration > 0f ? 1f - Ease.CubeOut(Percent) : 1f;
-                num *= TrailineModule.Settings.TrailOpacity;
+                Rectangle value = new Rectangle(Index % Columns * SnapshotWidth, Index / Columns * SnapshotHeight, SnapshotWidth, SnapshotHeight);
+                float opacity = Duration > 0f ? 1f - Ease.CubeOut(Percent) : 1f;
+                opacity *= TrailineModule.Settings.TrailOpacity;
                 if (buffer != null) {
-                    Draw.SpriteBatch.Draw((RenderTarget2D)buffer, Position, value, Color * num, 0f, new Vector2(64f, 64f) * 0.5f, Vector2.One, SpriteEffects.None, 0f);
+                    Draw.SpriteBatch.Draw((RenderTarget2D)buffer, Position, value, Color * opacity, 0f, new Vector2(SnapshotWidth, SnapshotHeight) * 0.5f, Vector2.One, SpriteEffects.None, 0f);
                 }
             }
 

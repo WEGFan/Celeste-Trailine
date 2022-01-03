@@ -12,7 +12,6 @@ namespace Celeste.Mod.Trailine.UI {
         public string Label;
         public int Index;
         public Action<int> OnValueChange;
-        public int PreviousIndex;
         public Func<float, int> GetIndexIncrementFunc;
         public Func<float> RightWidthFunc;
 
@@ -29,7 +28,7 @@ namespace Celeste.Mod.Trailine.UI {
             this.min = min;
             this.max = max;
             this.values = values;
-            Index = (value < min) ? min : (value > max) ? max : value;
+            Index = value < min ? min : value > max ? max : value;
             GetIndexIncrementFunc = DefaultGetIndexIncrementFunc;
             RightWidthFunc = DefaultRightWidthFunc;
         }
@@ -65,14 +64,14 @@ namespace Celeste.Mod.Trailine.UI {
         }
 
         public override void LeftPressed() {
-            if (Input.MenuLeft.Repeating)
+            if (Input.MenuLeft.Repeating) {
                 fastMoveTimer += Engine.RawDeltaTime * 8;
-            else
+            } else {
                 fastMoveTimer = 0;
+            }
 
             if (Index > min) {
                 Audio.Play("event:/ui/main/button_toggle_off");
-                PreviousIndex = Index;
                 Index -= GetIndexIncrement(fastMoveTimer);
                 Index = Math.Max(min, Index); // ensure we stay within bounds
                 lastDir = -1;
@@ -82,14 +81,14 @@ namespace Celeste.Mod.Trailine.UI {
         }
 
         public override void RightPressed() {
-            if (Input.MenuRight.Repeating)
+            if (Input.MenuRight.Repeating) {
                 fastMoveTimer += Engine.RawDeltaTime * 8;
-            else
+            } else {
                 fastMoveTimer = 0;
+            }
 
             if (Index < max) {
                 Audio.Play("event:/ui/main/button_toggle_on");
-                PreviousIndex = Index;
                 Index += GetIndexIncrement(fastMoveTimer);
                 Index = Math.Min(max, Index); // ensure we stay within bounds
                 lastDir = 1;
@@ -99,15 +98,14 @@ namespace Celeste.Mod.Trailine.UI {
         }
 
         public override void ConfirmPressed() {
-            if ((max - min) == 1) {
+            if (max - min == 1) {
                 if (Index == min) {
                     Audio.Play("event:/ui/main/button_toggle_on");
                 } else {
                     Audio.Play("event:/ui/main/button_toggle_off");
                 }
-                PreviousIndex = Index;
-                lastDir = ((Index == min) ? 1 : -1);
-                Index = ((Index == min) ? max : min);
+                lastDir = Index == min ? 1 : -1;
+                Index = Index == min ? max : min;
                 ValueWiggler.Start();
                 OnValueChange?.Invoke(Index);
             }
@@ -132,19 +130,19 @@ namespace Celeste.Mod.Trailine.UI {
         public override void Render(Vector2 position, bool highlighted) {
             float alpha = Container.Alpha;
             Color strokeColor = Color.Black * (alpha * alpha * alpha);
-            Color color = Disabled ? Color.DarkSlateGray : ((highlighted ? Container.HighlightColor : Color.White) * alpha);
+            Color color = Disabled ? Color.DarkSlateGray : (highlighted ? Container.HighlightColor : Color.White) * alpha;
             ActiveFont.DrawOutline(Label, position, new Vector2(0f, 0.5f), Vector2.One, color, 2f, strokeColor);
-            if ((max - min) > 0) {
+            if (max - min > 0) {
                 float rWidth = RightWidth();
                 ActiveFont.DrawOutline(values(Index), position + new Vector2(Container.Width - rWidth * 0.5f + lastDir * ValueWiggler.Value * 8f, 0f), new Vector2(0.5f, 0.5f), Vector2.One * 0.8f, color, 2f, strokeColor);
 
-                Vector2 vector = Vector2.UnitX * (float)(highlighted ? (Math.Sin(sine * 4f) * 4f) : 0f);
+                Vector2 vector = Vector2.UnitX * (float)(highlighted ? Math.Sin(sine * 4f) * 4f : 0f);
 
-                Vector2 position2 = position + new Vector2(Container.Width - rWidth + 40f + ((lastDir < 0) ? (-ValueWiggler.Value * 8f) : 0f), 0f) - (Index > min ? vector : Vector2.Zero);
-                ActiveFont.DrawOutline("<", position2, new Vector2(0.5f, 0.5f), Vector2.One, Index > min ? color : (Color.DarkSlateGray * alpha), 2f, strokeColor);
+                Vector2 position2 = position + new Vector2(Container.Width - rWidth + 40f + (lastDir < 0 ? -ValueWiggler.Value * 8f : 0f), 0f) - (Index > min ? vector : Vector2.Zero);
+                ActiveFont.DrawOutline("<", position2, new Vector2(0.5f, 0.5f), Vector2.One, Index > min ? color : Color.DarkSlateGray * alpha, 2f, strokeColor);
 
-                position2 = position + new Vector2(Container.Width - 40f + ((lastDir > 0) ? (ValueWiggler.Value * 8f) : 0f), 0f) + (Index < max ? vector : Vector2.Zero);
-                ActiveFont.DrawOutline(">", position2, new Vector2(0.5f, 0.5f), Vector2.One, Index < max ? color : (Color.DarkSlateGray * alpha), 2f, strokeColor);
+                position2 = position + new Vector2(Container.Width - 40f + (lastDir > 0 ? ValueWiggler.Value * 8f : 0f), 0f) + (Index < max ? vector : Vector2.Zero);
+                ActiveFont.DrawOutline(">", position2, new Vector2(0.5f, 0.5f), Vector2.One, Index < max ? color : Color.DarkSlateGray * alpha, 2f, strokeColor);
             }
         }
 
