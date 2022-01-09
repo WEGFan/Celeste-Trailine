@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
@@ -70,8 +71,7 @@ namespace Celeste.Mod.Trailine.Modules {
 
                     // count how many hair nodes should be used to draw trail
                     int drawNodesCount = 1;
-                    int originalHairCount = hair.Sprite.HairCount;
-                    for (int j = 1; j < originalHairCount; j++) {
+                    for (int j = 1; j < Math.Min(hair.Sprite.HairCount, nodes.Count); j++) {
                         // calculate node's position and size
                         MTexture hairTexture = hair.GetHairTexture(j);
                         Vector2 hairScale = hair.PublicGetHairScale(j).Abs();
