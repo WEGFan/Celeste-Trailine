@@ -4,7 +4,6 @@ using System.Linq;
 using Celeste.Mod.Trailine.Modules;
 using Celeste.Mod.Trailine.UI;
 using Celeste.Mod.Trailine.Utils;
-using Celeste.Mod.UI;
 using Microsoft.Xna.Framework;
 using Monocle;
 using MonoMod.Utils;
@@ -41,7 +40,6 @@ namespace Celeste.Mod.Trailine {
             set => TrailDurationSliderValue = Calc.Clamp((int)Math.Round(value * 20), 1, 60 * 20);
         }
 
-     
         [YamlIgnore]
         public int TrailOpacitySliderValue { get; set; } = (int)(0.8 * 20);
 
@@ -200,19 +198,49 @@ namespace Celeste.Mod.Trailine {
                     CurrentPattern.DurationSliderValue = value;
                 }));
             for (int i = 0; i < CurrentPattern.ColorStops.Count; i++) {
+                int index = i;
+
                 ColorStop colorStop = CurrentPattern.ColorStops[i];
                 TextMenuExt.SubMenu subMenu = new TextMenuExt.SubMenu($"Color {i + 1}: {ColorUtils.ColorToHex(colorStop.Color)}", false);
 
-                subMenu.Add(new TextMenu.Button($"Color: {ColorUtils.ColorToHex(colorStop.Color)}") {
-                        Disabled = inGame
+                subMenu.Add(new TextInputButton("Color", ColorUtils.ColorToHex(colorStop.Color).Trim('#'), 6, 6) {
+                        Disabled = false,
+                        LetterChars = string.Join("\n",
+                            "0 1 2 3",
+                            "4 5 6 7",
+                            "8 9 A B",
+                            "C D E F"
+                        )
                     }
-                    .Pressed(() => {
-                        Audio.Play("event:/ui/main/savefile_rename_start");
-                        textMenu.SceneAs<Overworld>().Goto<OuiModOptionString>()
-                            .Init<OuiModOptions>(ColorUtils.ColorToHex(colorStop.Color).TrimStart('#'),
-                                value => {
-                                    colorStop.Color = Calc.HexToColor(value);
-                                }, 6, 6);
+                    .Apply(it => {
+                        it.Pressed(() => {
+                            // temporary fix for pressing a button in a submenu item which goes to another menu
+                            // in this case, textMenu.Focused is false but subMenu.Focused is true
+                            // so the button can be pressed multiple times and cause issues
+                            subMenu.Focused = false;
+                        });
+                        it.Change(value => {
+                            colorStop.Color = Calc.HexToColor(value);
+                        });
+                        it.OnMenuExit += confirm => {
+                            subMenu.Focused = true;
+                            if (!confirm) {
+                                return;
+                            }
+
+                            subMenu.Exit();
+                            RecreatePatternEntries(textMenu, inGame);
+                            textMenu.MoveSelection(0);
+                            if (textMenu.Current is TextMenuExt.SubMenu selectedSubMenu) {
+                                string originalConfirmSfx = selectedSubMenu.ConfirmSfx;
+                                selectedSubMenu.ConfirmSfx = SFX.NONE;
+                                selectedSubMenu.ConfirmPressed();
+                                selectedSubMenu.ConfirmSfx = originalConfirmSfx;
+                                new DynData<TextMenuExt.SubMenu>(selectedSubMenu).Set("ease", 1f);
+                                selectedSubMenu.Selection = -1;
+                                selectedSubMenu.MoveSelection(1);
+                            }
+                        };
                     }));
 
                 if (i != 0) {
@@ -222,7 +250,6 @@ namespace Celeste.Mod.Trailine {
                         }));
                 }
 
-                int index = i;
                 subMenu.Add(new TextMenu.Button("Move Up") {
                         Disabled = i == 0
                     }
