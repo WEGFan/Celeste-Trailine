@@ -172,10 +172,6 @@ namespace Celeste.Mod.Trailine.Modules {
             }
         }
 
-        // public static void Add(Entity entity, Color color, float duration = 1f) {
-        //     Add(entity, color, duration, false);
-        // }
-
         public static void DebugRender() {
             TrailineTrailManager entity = Engine.Scene.Tracker.GetEntity<TrailineTrailManager>();
             if (entity == null) {

@@ -45,7 +45,7 @@ namespace Celeste.Mod.Trailine.Modules {
                     }
                     if (position.Y + height * 0.5f > 0f && position.Y - height * 0.5f < Engine.Height) {
                         Draw.HollowRect(position, width, height, color);
-                        Draw.TextJustified(Draw.DefaultFont, i.ToString(), position - new Vector2(10f, 0f), color, 1f, new Vector2(1f,0));
+                        Draw.TextJustified(Draw.DefaultFont, i.ToString(), position - new Vector2(10f, 0f), color, 1f, new Vector2(1f, 0));
                     }
                     position.Y += height + self.ItemSpacing;
                 }

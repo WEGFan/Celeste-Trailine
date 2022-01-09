@@ -67,7 +67,7 @@ namespace Celeste.Mod.Trailine {
                 File.Delete(path);
             }
 
-            Directory.CreateDirectory(Path.GetDirectoryName(path));
+            Directory.CreateDirectory(Path.GetDirectoryName(path)!);
 
             try {
                 using (FileStream stream = File.OpenWrite(path)) {
