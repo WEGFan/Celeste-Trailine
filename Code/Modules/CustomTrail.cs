@@ -1,4 +1,5 @@
 using System;
+using Celeste.Mod.Trailine.ThirdParty;
 using Microsoft.Xna.Framework;
 
 namespace Celeste.Mod.Trailine.Modules {
@@ -28,6 +29,9 @@ namespace Celeste.Mod.Trailine.Modules {
                     _ => Color.Transparent
                 };
                 Vector2 scale = new Vector2(Math.Abs(self.Sprite.Scale.X) * (float)self.Facing, self.Sprite.Scale.Y);
+                if (GravityHelperImports.IsPlayerInverted?.Invoke() ?? false) {
+                    scale.Y *= -1f;
+                }
                 TrailineTrailManager.Add(self, scale, color, Settings.TrailDuration);
             }
         }

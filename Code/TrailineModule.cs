@@ -2,9 +2,11 @@ using System;
 using System.IO;
 using Celeste.Mod.Core;
 using Celeste.Mod.Trailine.Modules;
+using Celeste.Mod.Trailine.ThirdParty;
 using Celeste.Mod.Trailine.UI;
 using Celeste.Mod.Trailine.Utils;
 using Microsoft.Xna.Framework;
+using MonoMod.ModInterop;
 using YamlDotNet.Serialization;
 
 namespace Celeste.Mod.Trailine {
@@ -23,6 +25,8 @@ namespace Celeste.Mod.Trailine {
         public static bool Loaded = false;
 
         public override void Load() {
+            typeof(GravityHelperImports).ModInterop();
+
             if (Loaded || !Settings.Enabled) {
                 return;
             }
